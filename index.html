@@ -265,7 +265,7 @@
             height: auto;
             display: block;
             border-radius: 20px;
-            pointer-events: none; /* Disable all interactions */
+            pointer-events: none;
         }
 
         .popup-content video::-webkit-media-controls {
@@ -531,8 +531,9 @@
         let isInitialized = false;
         let idleTime = 0;
 
-        // Smooth animation parameters
-        const smoothness = 0.12;
+        // Smooth animation parameters - faster for mobile
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const smoothness = isMobile ? 0.25 : 0.12; // Faster movement on mobile
         const randomWanderSpeed = 0.3;
         let animationFrame = null;
 
@@ -655,7 +656,10 @@
                 Math.pow(mouseX - btnCenterX, 2) + Math.pow(mouseY - btnCenterY, 2)
             );
             
-            if (distance < 180) {
+            // Larger detection radius on mobile
+            const detectionRadius = isMobile ? 120 : 180;
+            
+            if (distance < detectionRadius) {
                 idleTime = 0;
                 
                 const maxX = window.innerWidth - btnWidth - 20;
@@ -665,8 +669,10 @@
                 const randomAngle = (Math.random() - 0.5) * Math.PI * 0.6;
                 const angle = baseAngle + randomAngle;
                 
-                const escapeMultiplier = Math.max(1, (180 - distance) / 50);
-                const escapeDistance = (200 + Math.random() * 150) * escapeMultiplier;
+                const escapeMultiplier = Math.max(1, (detectionRadius - distance) / 50);
+                // Farther distance on mobile
+                const baseEscapeDistance = isMobile ? 350 : 200;
+                const escapeDistance = (baseEscapeDistance + Math.random() * 150) * escapeMultiplier;
                 
                 targetX = noBtnX + Math.cos(angle) * escapeDistance * 0.4;
                 targetY = noBtnY + Math.sin(angle) * escapeDistance * 0.4;
@@ -694,13 +700,16 @@
             }
         }, { passive: true });
 
+        // Click handler - jumps farther away instantly on mobile
         noBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const maxX = window.innerWidth - noBtn.offsetWidth - 20;
             const maxY = window.innerHeight - noBtn.offsetHeight - 20;
             
             const randomAngle = Math.random() * Math.PI * 2;
-            const randomDistance = Math.random() * Math.min(maxX, maxY) * 0.5;
+            // Much larger jump distance on mobile
+            const jumpDistance = isMobile ? Math.min(maxX, maxY) * 0.8 : Math.min(maxX, maxY) * 0.5;
+            const randomDistance = Math.random() * jumpDistance;
             
             targetX = Math.max(20, Math.min(noBtnX + Math.cos(randomAngle) * randomDistance, maxX));
             targetY = Math.max(20, Math.min(noBtnY + Math.sin(randomAngle) * randomDistance, maxY));
@@ -709,13 +718,16 @@
             velocityY = 0;
         });
 
+        // Touch handler - immediate fast jump on mobile
         noBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const maxX = window.innerWidth - noBtn.offsetWidth - 20;
             const maxY = window.innerHeight - noBtn.offsetHeight - 20;
             
             const randomAngle = Math.random() * Math.PI * 2;
-            const randomDistance = Math.random() * Math.min(maxX, maxY) * 0.5;
+            // Extra far jump on touch - 90% of available space
+            const jumpDistance = Math.min(maxX, maxY) * 0.9;
+            const randomDistance = jumpDistance * (0.6 + Math.random() * 0.4); // Between 60-100% of max
             
             targetX = Math.max(20, Math.min(noBtnX + Math.cos(randomAngle) * randomDistance, maxX));
             targetY = Math.max(20, Math.min(noBtnY + Math.sin(randomAngle) * randomDistance, maxY));
@@ -811,4 +823,3 @@
     </script>
 </body>
 </html>
-
